@@ -5,13 +5,16 @@ import os
 import json
 import sys
 from datetime import datetime
+
+from google.genai import types
 from openai import OpenAI
+from google import genai
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import OPENAI_API_KEY
+from config import OPENAI_API_KEY, GEMINI_API_KEY
 
-if not OPENAI_API_KEY:
-    print("❌ Missing OPENAI_API_KEY")
+if not OPENAI_API_KEY or not GEMINI_API_KEY:
+    print("❌ Missing XXXXX_API_KEY")
     sys.exit(1)
 
 def load_comprehensive_data():
@@ -48,6 +51,89 @@ def load_comprehensive_data():
                 trade["buffer_pct"] = ((trade["short_strike"] - current) / current * 100)
     
     return data
+
+def call_gemini(prompt, tickers):
+
+    print("\n🤖 Calling Gemini for 5W1H analysis...")
+    client = OpenAI(api_key=GEMINI_API_KEY,
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+
+    try:
+        response = client.chat.completions.create(
+            model="gemini-2.5-flash",
+            reasoning_effort="low",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You analyze credit spreads with structured 5W1H news analysis. Extract specific dates, events, entities from headlines and summaries. Assign risk heat scores 1-10."
+                },
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            max_tokens=3000
+        )
+
+        analysis = response.choices[0].message.content
+
+        if analysis is None:
+            raise Exception('Gemini analysis failed.')
+
+        print("✅ Analysis complete\n")
+
+        print("=" * 60)
+        print("GEMINI ANALYSIS:")
+        print("=" * 60)
+
+        with open("data/top9_gemini_analysis.json", "w") as f:
+            json.dump({
+                "timestamp": datetime.now().isoformat(),
+                "analysis": analysis,
+                "tickers": tickers
+            }, f, indent=2)
+
+        print("\n✅ Saved to data/top9_gemini_analysis.json")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+
+def call_gpt(prompt, tickers):
+
+    print("\n🤖 Calling GPT for 5W1H analysis...")
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You analyze credit spreads with structured 5W1H news analysis. Extract specific dates, events, entities from headlines and summaries. Assign risk heat scores 1-10."
+                },
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            max_tokens=3000
+        )
+
+        analysis = response.choices[0].message.content
+        print("✅ Analysis complete\n")
+
+        print("=" * 60)
+        print("GPT ANALYSIS:")
+        print("=" * 60)
+        print(analysis)
+
+        with open("data/top9_gpt_analysis.json", "w") as f:
+            json.dump({
+                "timestamp": datetime.now().isoformat(),
+                "analysis": analysis,
+                "tickers": tickers
+            }, f, indent=2)
+
+        print("\n✅ Saved to data/top9_gpt_analysis.json")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
 
 def create_analysis_prompt(data):
     prompt = f"""Analyze 9 credit spreads with STRUCTURED NEWS ANALYSIS and HEAT SCORES.
@@ -120,7 +206,7 @@ Continue through all 9 trades. Be specific with dates and events.
 
 def main():
     print("="*60)
-    print("STEP 8: GPT News Analysis")
+    print("STEP 8: LLM News Analysis")
     print("="*60)
     
     print("\n📊 Loading data...")
@@ -134,43 +220,11 @@ def main():
     print(f"   Tickers: {', '.join(tickers)}")
     
     prompt = create_analysis_prompt(data)
-    
-    print("\n🤖 Calling GPT for 5W1H analysis...")
-    client = OpenAI(api_key=OPENAI_API_KEY)
-    
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You analyze credit spreads with structured 5W1H news analysis. Extract specific dates, events, entities from headlines and summaries. Assign risk heat scores 1-10."
-                },
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=3000
-        )
-        
-        analysis = response.choices[0].message.content
-        print("✅ Analysis complete\n")
-        
-        print("="*60)
-        print("GPT ANALYSIS:")
-        print("="*60)
-        print(analysis)
-        
-        with open("data/top9_analysis.json", "w") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "analysis": analysis,
-                "tickers": tickers
-            }, f, indent=2)
-        
-        print("\n✅ Saved to data/top9_analysis.json")
-        
-    except Exception as e:
-        print(f"❌ Error: {e}")
+
+    # call_gpt(prompt, tickers)
+
+    call_gemini(prompt, tickers)
+
 
 if __name__ == "__main__":
     main()

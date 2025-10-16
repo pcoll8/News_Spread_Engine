@@ -72,7 +72,7 @@ def main():
     print("\n" + "="*80)
     print("✅ PIPELINE COMPLETE!")
     print("="*80)
-    print("\nCheck data/top9_analysis.json for final trades")
+    print("\nCheck top9_analysis JSON for final trades")
 
 if __name__ == "__main__":
     main()

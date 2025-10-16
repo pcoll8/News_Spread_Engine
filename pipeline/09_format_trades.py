@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 
 def load_data():
-    with open("data/top9_analysis.json", "r") as f:
+    with open("data/top9_gemini_analysis.json", "r") as f:
         return json.load(f)
 
 def parse_trades(analysis_text):

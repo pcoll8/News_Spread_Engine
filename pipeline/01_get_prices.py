@@ -17,8 +17,8 @@ def check_prerequisites():
     if not username or not password:
         print("❌ Missing TastyTrade credentials")
         print("Set them with:")
-        print("export TASTY_USERNAME='your_username'")
-        print("export TASTY_PASSWORD='your_password'")
+        print("$env:TASTY_USERNAME = 'tu_usuario'")
+        print("$env:TASTY_PASSWORD = 'tu_contraseña'")
         sys.exit(1)
     
     # Check if data directory exists

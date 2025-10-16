@@ -73,7 +73,7 @@ def show_flow():
             print(f"   ↓ Ranked: {ranked['summary']['total']}")
             print(f"   ↓ Top 22 (1 per ticker): {len(ranked['top_22'])}")
         
-        with open("data/top9_analysis.json", "r") as f:
+        with open("data/top9_gemini_analysis.json", "r") as f:
             top9 = json.load(f)
             print(f"\n🎯 Final Output: 9 trades ready")
             
@@ -117,7 +117,7 @@ def main():
         print(f"\n{'='*80}")
         print(f"✅ PIPELINE COMPLETE ({elapsed:.1f}s total)")
         print(f"{'='*80}")
-        print("\n💰 Run: python3 pipeline/09_format_trades.py")
+        print("\n💰 Run: python pipeline/09_format_trades.py")
         print("📊 To see your 9 trades")
     else:
         print(f"\n❌ Pipeline stopped at step {failed_at}")

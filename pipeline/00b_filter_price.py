@@ -5,7 +5,6 @@ import json
 import asyncio
 import sys
 import os
-from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import USERNAME, PASSWORD
