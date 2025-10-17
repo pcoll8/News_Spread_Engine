@@ -5,23 +5,35 @@ import asyncio
 import json
 import sys
 import os
+import truststore
 from datetime import datetime
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.dxfeed import Greeks
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import USERNAME, PASSWORD
+truststore.inject_into_ssl()
+
 
 async def get_connected_greeks():
     print("="*60)
     print("STEP 04: Get Greeks")
     print("="*60)
+
+    username = os.getenv("USERNAME")
+    password = os.getenv("PASSWORD")
+
+    if not username or not password:
+        print("❌ Missing TastyTrade credentials")
+        print("Set them with:")
+        print("$env:USERNAME = 'tu_usuario'")
+        print("$env:PASSWORD = 'tu_contraseña'")
+        sys.exit(1)
     
     # Load chains with symbols
     with open("data/chains.json", "r") as f:
         chains_data = json.load(f)
     
-    sess = Session(USERNAME, PASSWORD)
+    sess = Session(username, password)
     
     print("\n🧮 Collecting Greeks for exact chain strikes...")
     

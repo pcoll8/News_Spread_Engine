@@ -6,19 +6,22 @@ import asyncio
 import json
 import sys
 import os
+import truststore
 from datetime import datetime
 
+
 def check_prerequisites():
+    truststore.inject_into_ssl()
     """Check if everything is set up correctly"""
     # Check credentials
-    username = os.getenv("TASTY_USERNAME")
-    password = os.getenv("TASTY_PASSWORD")
+    username = os.getenv("USERNAME")
+    password = os.getenv("PASSWORD")
     
     if not username or not password:
         print("❌ Missing TastyTrade credentials")
         print("Set them with:")
-        print("$env:TASTY_USERNAME = 'tu_usuario'")
-        print("$env:TASTY_PASSWORD = 'tu_contraseña'")
+        print("$env:USERNAME = 'tu_usuario'")
+        print("$env:PASSWORD = 'tu_contraseña'")
         sys.exit(1)
     
     # Check if data directory exists

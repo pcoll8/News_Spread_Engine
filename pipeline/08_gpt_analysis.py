@@ -6,54 +6,57 @@ import json
 import sys
 from datetime import datetime
 
-from google.genai import types
 from openai import OpenAI
-from google import genai
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import OPENAI_API_KEY, GEMINI_API_KEY
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 if not OPENAI_API_KEY or not GEMINI_API_KEY:
     print("❌ Missing XXXXX_API_KEY")
+    print("Set it with:")
+    print("$env:OPENAI_API_KEY or GEMINI_API_KEY = 'YOUR_API_KEY'")
     sys.exit(1)
+
 
 def load_comprehensive_data():
     data = {}
-    
+
     with open("data/report_table.json", "r") as f:
         data["trades"] = json.load(f)["report_table"]
-    
+
     with open("data/stock_prices.json", "r") as f:
         data["prices"] = json.load(f)["prices"]
-    
+
     try:
         with open("data/finnhub_news.json", "r") as f:
             news = json.load(f)
             data["news"] = news["news_data"]
     except:
         data["news"] = {}
-    
+
     for trade in data["trades"]:
         ticker = trade["ticker"]
-        
+
         if ticker in data["prices"]:
             trade["current_price"] = data["prices"][ticker]["mid"]
-        
+
         strikes = trade['legs'].replace('$', '').split('/')
         trade["short_strike"] = float(strikes[0])
         trade["long_strike"] = float(strikes[1])
-        
+
         if "current_price" in trade:
             current = trade["current_price"]
             if "Put" in trade['type']:
                 trade["buffer_pct"] = ((current - trade["short_strike"]) / current * 100)
             else:
                 trade["buffer_pct"] = ((trade["short_strike"] - current) / current * 100)
-    
+
     return data
 
-def call_gemini(prompt, tickers):
 
+def call_gemini(prompt, tickers):
     print("\n🤖 Calling Gemini for 5W1H analysis...")
     client = OpenAI(api_key=GEMINI_API_KEY,
                     base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
@@ -96,8 +99,8 @@ def call_gemini(prompt, tickers):
     except Exception as e:
         print(f"❌ Error: {e}")
 
-def call_gpt(prompt, tickers):
 
+def call_gpt(prompt, tickers):
     print("\n🤖 Calling GPT for 5W1H analysis...")
     client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -121,7 +124,6 @@ def call_gpt(prompt, tickers):
         print("=" * 60)
         print("GPT ANALYSIS:")
         print("=" * 60)
-        print(analysis)
 
         with open("data/top9_gpt_analysis.json", "w") as f:
             json.dump({
@@ -135,6 +137,7 @@ def call_gpt(prompt, tickers):
     except Exception as e:
         print(f"❌ Error: {e}")
 
+
 def create_analysis_prompt(data):
     prompt = f"""Analyze 9 credit spreads with STRUCTURED NEWS ANALYSIS and HEAT SCORES.
 
@@ -147,7 +150,7 @@ HEAT SCORE (1-10):
 
 TRADES WITH NEWS:
 """
-    
+
     for i, trade in enumerate(data["trades"], 1):
         buffer = trade.get("buffer_pct", 0)
         current = trade.get("current_price", 0)
@@ -156,7 +159,7 @@ TRADES WITH NEWS:
         score = (roi * pop) / 100
         ticker = trade['ticker']
         dte = trade.get('dte', 'N/A')
-        
+
         prompt += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TRADE #{i}: {ticker} {trade['type']} {trade['legs']}
@@ -167,7 +170,7 @@ METRICS:
 
 NEWS (last 3 days):
 """
-        
+
         if ticker in data.get("news", {}):
             articles = data["news"][ticker]["articles"][:3]
             for idx, article in enumerate(articles, 1):
@@ -204,24 +207,25 @@ Continue through all 9 trades. Be specific with dates and events.
 """
     return prompt
 
+
 def main():
-    print("="*60)
+    print("=" * 60)
     print("STEP 8: LLM News Analysis")
-    print("="*60)
-    
+    print("=" * 60)
+
     print("\n📊 Loading data...")
     data = load_comprehensive_data()
-    
+
     tickers = [t['ticker'] for t in data['trades']]
     news_count = sum(1 for t in tickers if t in data.get('news', {}))
-    
+
     print(f"   ✓ {len(data['trades'])} trades")
     print(f"   ✓ {news_count}/{len(tickers)} tickers with news")
     print(f"   Tickers: {', '.join(tickers)}")
-    
+
     prompt = create_analysis_prompt(data)
 
-    # call_gpt(prompt, tickers)
+    call_gpt(prompt, tickers)
 
     call_gemini(prompt, tickers)
 

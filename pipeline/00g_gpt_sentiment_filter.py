@@ -9,13 +9,21 @@ from datetime import datetime
 from openai import OpenAI
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import OPENAI_API_KEY
+
 
 def analyze_news_sentiment():
     """Use GPT to filter out risky stocks"""
     print("="*60)
     print("STEP 0G: GPT Sentiment Analysis")
     print("="*60)
+
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+    if not OPENAI_API_KEY:
+        print("❌ Missing OPENAI_API_KEY")
+        print("Set it with:")
+        print("$env:OPENAI_API_KEY = 'YOUR_API_KEY'")
+        sys.exit(1)
     
     # Load news
     with open('data/finnhub_news.json', 'r') as f:

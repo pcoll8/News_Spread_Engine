@@ -5,13 +5,14 @@ import json
 import sys
 import os
 import asyncio
+import truststore
 from datetime import datetime, timedelta
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.instruments import get_option_chain
 from tastytrade.dxfeed import Quote
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import USERNAME, PASSWORD
+
 
 def load_stock_prices():
     try:
@@ -22,13 +23,25 @@ def load_stock_prices():
         print("❌ stock_prices.json not found")
         sys.exit(1)
 
+
 async def get_chains():
+    truststore.inject_into_ssl()
     print("="*60)
     print("STEP 02: Get Options Chains")
     print("="*60)
+
+    username = os.getenv("USERNAME")
+    password = os.getenv("PASSWORD")
+
+    if not username or not password:
+        print("❌ Missing TastyTrade credentials")
+        print("Set them with:")
+        print("$env:USERNAME = 'tu_usuario'")
+        print("$env:PASSWORD = 'tu_contraseña'")
+        sys.exit(1)
     
     prices = load_stock_prices()
-    sess = Session(USERNAME, PASSWORD)
+    sess = Session(username, password)
     
     chains = {}
     today = datetime.now().date()

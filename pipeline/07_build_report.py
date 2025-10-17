@@ -8,6 +8,7 @@ from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 def build_report_table():
     print("="*60)
     print("STEP 7: Build Report (Top 9)")
@@ -73,6 +74,7 @@ def build_report_table():
         print(f"{entry['rank']:<5} {entry['ticker']:<8} {entry['type']:<12} {entry['roi']:<8} {entry['pop']:<8}")
     
     print("\n✅ Step 7 complete: report_table.json")
+
 
 if __name__ == "__main__":
     build_report_table()
