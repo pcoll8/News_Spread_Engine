@@ -5,31 +5,33 @@ import json
 import re
 from datetime import datetime
 
+
 def load_data():
-    with open("data/top9_gemini_analysis.json", "r") as f:
+    with open("data/top9_gpt_analysis.json", "r") as f:
         return json.load(f)
+
 
 def parse_trades(analysis_text):
     trades = []
     trade_blocks = re.split(r'#\d+\.', analysis_text)[1:]
-    
+
     for i, block in enumerate(trade_blocks, 1):
         lines = block.strip().split('\n')
         if not lines:
             continue
-        
+
         header = lines[0].strip()
         parts = header.split()
-        
+
         if len(parts) < 3:
             continue
-            
+
         ticker = parts[0]
         trade_type = ' '.join(parts[1:-1])
         strikes = parts[-1]
-        
+
         metrics_line = next((l for l in lines if 'DTE:' in l), '')
-        
+
         dte = roi = pop = heat = "N/A"
         if metrics_line:
             if 'DTE:' in metrics_line:
@@ -44,7 +46,7 @@ def parse_trades(analysis_text):
             if 'HEAT:' in metrics_line:
                 heat = re.search(r'HEAT:\s*(\d+)', metrics_line)
                 heat = heat.group(1) if heat else "N/A"
-        
+
         # Extract catalyst risk summary
         catalyst = "No catalysts"
         catalyst_idx = next((idx for idx, l in enumerate(lines) if 'CATALYST RISK:' in l), None)
@@ -54,14 +56,14 @@ def parse_trades(analysis_text):
             words = catalyst.split()
             if len(words) > 33:
                 catalyst = ' '.join(words[:33]) + "..."
-        
+
         rec_line = next((l for l in lines if 'RECOMMENDATION:' in l), '')
         recommendation = "Pending"
         if rec_line:
             rec_idx = lines.index(rec_line)
             if rec_idx + 1 < len(lines):
                 recommendation = lines[rec_idx + 1].strip()
-        
+
         trades.append({
             'rank': i,
             'ticker': ticker,
@@ -74,7 +76,7 @@ def parse_trades(analysis_text):
             'catalyst': catalyst,
             'recommendation': recommendation
         })
-    
+
     return trades
 
 def print_table(trades):
@@ -102,26 +104,28 @@ def print_table(trades):
     for t in trades:
         print(f"#{t['rank']} {t['ticker']}: {t['recommendation']}")
 
+
 def save_csv(trades):
-    filename = f"data/top9_trades_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-    
+    filename = f"data/top9_gpt_trades_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+
     with open(filename, "w") as f:
         f.write("Rank,Ticker,Type,Strikes,DTE,ROI,PoP,Heat,Catalyst,Recommendation\n")
         for t in trades:
             catalyst = t['catalyst'].replace(',', ';')
             rec = t['recommendation'].replace(',', ';')
-            f.write(f"{t['rank']},{t['ticker']},{t['type']},{t['strikes']},{t['dte']},{t['roi']},{t['pop']},{t['heat']},\"{catalyst}\",\"{rec}\"\n")
-    
+            f.write(
+                f"{t['rank']},{t['ticker']},{t['type']},{t['strikes']},{t['dte']},{t['roi']},{t['pop']},{t['heat']},\"{catalyst}\",\"{rec}\"\n")
+
     print(f"\nSaved to {filename}")
 
 def main():
-    print("="*60)
+    print("=" * 60)
     print("STEP 9: Format Top 9 with News")
-    print("="*60)
-    
+    print("=" * 60)
+
     data = load_data()
     trades = parse_trades(data['analysis'])
-    
+
     if trades:
         print_table(trades)
         save_csv(trades)
