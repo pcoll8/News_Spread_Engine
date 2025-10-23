@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def load_data():
-    with open("data/top9_gpt_analysis.json", "r") as f:
+    with open("data/top9_gemini_analysis.json", "r") as f:
         return json.load(f)
 
 
@@ -79,34 +79,36 @@ def parse_trades(analysis_text):
 
     return trades
 
+
 def print_table(trades):
-    print("\n" + "="*140)
+    print("\n" + "=" * 140)
     print("TOP 9 CREDIT SPREADS - WITH NEWS CATALYSTS")
     print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print("="*140)
-    
-    print(f"\n{'#':<4} {'Ticker':<8} {'Type':<12} {'Strikes':<12} {'DTE':<5} {'ROI':<8} {'PoP':<8} {'Heat':<5} {'Catalyst Summary':<50}")
-    print("-"*140)
-    
+    print("=" * 140)
+
+    print(
+        f"\n{'#':<4} {'Ticker':<8} {'Type':<12} {'Strikes':<12} {'DTE':<5} {'ROI':<8} {'PoP':<8} {'Heat':<5} {'Catalyst Summary':<50}")
+    print("-" * 140)
+
     for trade in trades:
         catalyst_short = trade['catalyst'][:47] + "..." if len(trade['catalyst']) > 50 else trade['catalyst']
         print(f"{trade['rank']:<4} {trade['ticker']:<8} {trade['type']:<12} {trade['strikes']:<12} "
               f"{trade['dte']:<5} {trade['roi']:<8} {trade['pop']:<8} {trade['heat']:<5} {catalyst_short:<50}")
-    
-    print("-"*140)
-    
+
+    print("-" * 140)
+
     trade_count = len([t for t in trades if 'Trade' in t['recommendation'] and 'Wait' not in t['recommendation']])
     wait_count = len([t for t in trades if 'Wait' in t['recommendation']])
-    
+
     print(f"\nSUMMARY: {len(trades)} analyzed | {trade_count} Trade Now | {wait_count} Wait")
-    
+
     print(f"\nDETAILED RECOMMENDATIONS:")
     for t in trades:
         print(f"#{t['rank']} {t['ticker']}: {t['recommendation']}")
 
 
 def save_csv(trades):
-    filename = f"data/top9_gpt_trades_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+    filename = f"data/top9_gemini_trades_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
 
     with open(filename, "w") as f:
         f.write("Rank,Ticker,Type,Strikes,DTE,ROI,PoP,Heat,Catalyst,Recommendation\n")
@@ -118,6 +120,7 @@ def save_csv(trades):
 
     print(f"\nSaved to {filename}")
 
+
 def main():
     print("=" * 60)
     print("STEP 9: Format Top 9 with News")
@@ -125,13 +128,15 @@ def main():
 
     data = load_data()
     trades = parse_trades(data['analysis'])
+    print(trades)
 
     if trades:
-        print_table(trades)
+        # print_table(trades)
         save_csv(trades)
         print("\nStep 9 complete")
     else:
         print("Could not parse trades")
+
 
 if __name__ == "__main__":
     main()

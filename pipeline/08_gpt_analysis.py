@@ -73,10 +73,15 @@ def call_gemini(prompt, tickers):
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
-            max_tokens=3000
+            max_tokens=5000
         )
 
         analysis = response.choices[0].message.content
+        print("--- USO DE TOKENS ---")
+        print(f"Tokens en la respuesta (completion_tokens): {response.usage.completion_tokens}")
+        print(f"Tokens en el prompt (prompt_tokens): {response.usage.prompt_tokens}")
+        print(f"Tokens totales (total_tokens): {response.usage.total_tokens}")
+        print(f"Razon de finalizacion: {response.choices[0].finish_reason}")
 
         if analysis is None:
             raise Exception('Gemini analysis failed.')
